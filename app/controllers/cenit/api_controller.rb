@@ -42,8 +42,8 @@ module Cenit
     end
 
     def save_request_data
-      @objects = params[:webhook].keys.map {|k| k.singularize}
-      @message = params[:webhook].to_json
+      @objects = params[:api].keys.map {|k| k.singularize}
+      @message = params[:api].to_json
     end
 
   end

@@ -48,6 +48,7 @@ module Setup
       end
       ModelSchema.parse_str_schema(self.schema, m ? [m] : [])
     end
+    alias_method :model, :load_model
 
     protected
 
@@ -128,6 +129,15 @@ module Setup
             c.include m
           end
         end
+        
+        # definition of to_wof method wich returns the string wombat object format(wof) 
+        # of this object/model
+        c.send(:define_method, 'to_wof') do
+          split = self.class.to_s.split("::")
+          klass = split.last
+          return "{ \"%s\":[%s]}" % [klass.tableize, self.to_json] 
+        end
+
         return c
       end
 

@@ -7,7 +7,8 @@ Cenit::Application.routes.draw do
   root to: 'rails_admin/main#dashboard'
 
   namespace :cenit do
-    post '/', to: 'webhook#consume', as: 'webhook'
+    #post '/', to: 'webhook#consume', as: 'webhook'
+    post '/', to: 'api#consume', as: 'webhook'    
   end
 
 end

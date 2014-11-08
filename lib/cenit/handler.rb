@@ -29,11 +29,13 @@ module Cenit
 
         root = self.model.pluralize
         count = 0
+
         self.payload[root].each do |obj|
 
           next if obj[:id].empty? rescue obj[:id] = obj[:id].to_s
 
           @object = model_schema.model.where(id: obj[:id]).first
+
           if @object
             @object.update_attributes(obj)
           else
