@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 
-ruby '2.1.2'
+#ruby '2.1.2'
+ruby '2.1.4' 
 gem 'rails', '4.1.4'
 gem 'sass-rails', '~> 4.0.3'
 gem 'uglifier', '>= 1.3.0'
@@ -16,6 +17,10 @@ group :doc do
   gem 'sdoc', require: false
 end
 
+group :development do
+  gem 'pry-rails' 
+end
+
 group :development, :test do
   gem 'factory_girl_rails'
   gem 'rspec-rails'
@@ -24,8 +29,6 @@ group :development, :test do
 end
 
 group :test do
-  gem 'factory_girl_rails'
-  gem 'rspec-rails'
   gem 'mongoid-rspec'
   gem 'database_cleaner'
 end
