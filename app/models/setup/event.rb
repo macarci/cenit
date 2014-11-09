@@ -48,27 +48,31 @@ module Setup
       return true if attr.nil?
       
       result = case rule
-      when 'now present'
-        object.send(attr).present?
-      when 'no longer present'
-        !object.send(attr).present?
-      when 'has changed to a value'
-        eval [object.send(attr), condition, value].join(' ')
-      end
+                 when 'now present'
+                   object.send(attr).present?
+                 when 'no longer present'
+                   !object.send(attr).present?
+                 when 'has changed to a value'
+                   eval [object.send(attr), condition, value].join(' ')
+                end
       
       return result
     end
 
-    def throw( object = nil )
-      if self.apply(object) 
-        flows = Setup::Flow.where( event: self )
-        flows.each { |f| f.process(object) } if flows.any? 
-      end
+    #def throw( object = nil )
+    #  if self.apply(object) 
+    #    flows = Setup::Flow.where( event: self )
+    #    flows.each { |f| f.process(object) } if flows.any? 
+    #  end
+    #end
+
+    def fire(object = nil)
+      object_message = object.to_wof
+      Cenit::Rabbit.publish(object_message, self) if apply(object)
     end
     
     def full_name
       "#{self.name}  #{model.name.downcase if model && model.name.present? }" 
     end  
-
   end
 end

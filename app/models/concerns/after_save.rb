@@ -20,9 +20,9 @@ module AfterSave
 
   def find_events(action)
     basic_event = Setup::Event.find_by(name: action)
-    basic_event.throw(self) unless basic_event.nil?
+    basic_event.fire(self) unless basic_event.nil?
 
-    Setup::Event.where(model: self.model_schema).each {|e| e.throw(self)}
+    Setup::Event.where(model: self.model_schema).each {|e| e.fire(self)}
   end
 
 end
