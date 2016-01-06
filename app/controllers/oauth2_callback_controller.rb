@@ -27,5 +27,9 @@ class Oauth2CallbackController < ApplicationController
     redirect_to redirect_path
   end
 
+  def google
+    puts 'Ok!'
+  end
+
 
 end

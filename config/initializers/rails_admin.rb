@@ -2178,6 +2178,7 @@ RailsAdmin.config do |config|
       field :client
       field :scopes
 
+      field :refresh_token
       field :token_type
       field :access_token
       field :token_span

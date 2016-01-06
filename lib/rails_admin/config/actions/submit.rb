@@ -50,7 +50,7 @@ module RailsAdmin
                 end
               end unless selecting_connection
               if @form_object.errors.present?
-                do_flash(:error, 'There are errors in the import data specification', @form_object.errors.full_messages)
+                do_flash(:error, 'There are errors in the submit data', @form_object.errors.full_messages)
               end
 
               render :form
@@ -105,7 +105,7 @@ module RailsAdmin
               'required' => required,
               'properties' => {
                 'connection' => {
-                  '$ref' => 'Setup::Connection',
+                  '$ref' => Setup::Connection.to_s,
                   'referenced' => true
                 }
               }.merge!(pararms_properties)

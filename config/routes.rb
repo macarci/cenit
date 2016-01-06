@@ -12,6 +12,7 @@ Cenit::Application.routes.draw do
   end
 
   get 'oauth2/callback', to: 'oauth2_callback#index'
+  get 'oauth2/callback/google', to: 'oauth2_callback#google'
   get 'schema', to: 'schema#index'
   get 'captcha', to: 'captcha#index'
   get 'captcha/:token', to: 'captcha#index'
