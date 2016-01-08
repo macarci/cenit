@@ -61,6 +61,17 @@ module Mongoff
       @new_record
     end
 
+    def becomes(klass)
+      became = klass.new(attributes)
+      became.id = id
+      became.instance_variable_set(:@errors, ActiveModel::Errors.new(became))
+      became.errors.instance_variable_set(:@messages, errors.instance_variable_get(:@messages))
+      became.instance_variable_set(:@new_record, new_record?)
+      became.instance_variable_set(:@destroyed, destroyed?)
+      became._type = klass.to_s
+      became
+    end
+
     def persisted?
       !new_record? && !destroyed?
     end
@@ -73,16 +84,30 @@ module Mongoff
       raise Exception.new('Invalid data') unless save(options)
     end
 
+    def validate
+      unless @vailidated
+        errors.clear
+        orm_model.fully_validate_against_schema(attributes).each do |error|
+          errors.add(:base, error[:message])
+        end
+        @validated = true
+      end
+    end
+
+    def valid?
+      validate
+      errors.blank?
+    end
+
     def save(options = {})
       errors.clear
       if destroyed?
         errors.add(:base, 'Destroyed record can not be saved')
         return false
       end
-      orm_model.fully_validate_against_schema(attributes).each do |error|
-        errors.add(:base, error[:message])
-      end
+      validate
       begin
+        instance_variable_set(:@discard_event_lookup, true) if options[:discard_events]
         if Model.before_save.call(self) && before_save_callbacks
           if new_record?
             orm_model.collection.insert_one(attributes)
@@ -94,14 +119,13 @@ module Mongoff
             if doc = query.first
               doc.keys.each { |key| unset[key] = '' unless set.has_key?(key) }
             end
-            update = {'$set' => set}
+            update = { '$set' => set }
             if unset.present?
               update['$unset'] = unset
             end
             query.update_one(update)
           end
           Model.after_save.call(self)
-
         end
       rescue Exception => ex
         errors.add(:base, ex.message)
@@ -127,7 +151,7 @@ module Mongoff
             RecordArray.new(property_model, value, association.referenced?)
           else
             if association.referenced?
-              property_model.find(value)
+              value && property_model.find(value)
             elsif value
               Record.new(property_model, value)
             else
@@ -145,6 +169,7 @@ module Mongoff
 
     def []=(field, value)
       @changed = true
+      @validated = false
       field = :_id if %w(id _id).include?(field.to_s)
       if !orm_model.property?(field) && association = nested_attributes_association(field)
         fail "invalid attributes format #{value}" unless value.is_a?(Hash)
@@ -195,9 +220,9 @@ module Mongoff
       if value.nil?
         @fields.delete(field)
         document.delete(attribute_key)
-      elsif value.is_a?(Record) || value.class.respond_to?(:data_type)
+      elsif attribute_key == field && (value.is_a?(Record) || value.class.respond_to?(:data_type))
         @fields[field] = value
-        document[attribute_key] = value.attributes if attribute_key == field
+        document[attribute_key] = value.attributes
       elsif !value.is_a?(Hash) && value.is_a?(Enumerable)
         attr_array = []
         if !attribute_assigning && property_model && property_model.modelable?

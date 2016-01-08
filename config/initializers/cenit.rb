@@ -43,6 +43,12 @@ Cenit.config do
   #Delete records asynchronous
   asynchronous_deletion true
 
+  #Execute algorithms asynchronous
+  asynchronous_algorithm_execution true
+
+  #Process webhook submits asynchronous
+  asynchronous_submission true
+
   #oauth2 callback site
   oauth2_callback_site ENV['OAUTH2_CALLBACK_SITE']
 

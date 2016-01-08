@@ -12,11 +12,11 @@ module Setup
 
     Setup::Models.exclude_actions_for self, :update, :bulk_delete, :delete, :delete_all
 
-    BuildInDataType.regist(self).referenced_by(:name, :library).including(:slug)
+    BuildInDataType.regist(self).with(:title, :name, :events, :before_save_callbacks, :records_methods, :data_type_methods).referenced_by(:name, :library).including(:library, :slug)
 
     def self.to_include_in_models
       @to_include_in_models ||= [Setup::DynamicRecord,
-                                 Mongoid::Document,
+                                 Mongoid::CenitDocument,
                                  Mongoid::Timestamps,
                                  Setup::SchemaModelAware,
                                  Setup::ClassAffectRelation,
@@ -50,7 +50,7 @@ module Setup
     attr_readonly :name
 
     validates_presence_of :library, :name
-    validates_uniqueness_of :name, scope: :library
+    validates_uniqueness_of :name, scope: :library_id
 
     scope :activated, -> { where(activated: true) }
 
@@ -170,10 +170,10 @@ module Setup
       load_models(options)[:model]
     end
 
-    def load_models(options={reload: false, reset_config: true})
+    def load_models(options={ reload: false, reset_config: true })
       reload
       do_activate = options.delete(:activated) || activated
-      report = {loaded: Set.new, errors: {}}
+      report = { loaded: Set.new, errors: {} }
       begin
         model =
           if (do_shutdown = options[:reload]) || !loaded?
@@ -183,9 +183,7 @@ module Setup
             self.model
           end
       rescue Exception => ex
-        #TODO Delete raise
-        raise ex
-        puts "ERROR: #{errors.add(:schema, ex.message).to_s}"
+        Setup::Notification.create(message: "Error loading models data type models: #{errors.add(:schema, ex.message).to_s}")
         report[:errors][self] = errors.full_messages
         DataType.shutdown(self, options)
       end
@@ -223,7 +221,10 @@ module Setup
     end
 
     def find_data_type(ref, library_id = self.library_id)
-      super || Setup::DataType.where(library_id: library_id, name: ref).first
+      super ||
+        Setup::DataType.where(library_id: library_id, name: ref).first ||
+        ((ref = ref.to_s).start_with?('Dt') && Setup::DataType.where(id: ref.from(2)).first) ||
+        nil
     end
 
     def library_id
@@ -460,7 +461,7 @@ module Setup
       [true, affected]
     end
 
-    def deconstantize_mongoff_model(model, report={:destroyed => Set.new, :affected => Set.new}, affected=nil)
+    def deconstantize_mongoff_model(model, report={ :destroyed => Set.new, :affected => Set.new }, affected=nil)
       continue, affected = preprocess_deconstantization(model, report, affected)
       return report unless continue
       puts "Reporting #{affected ? 'affected' : 'destroyed'} model #{model.to_s} -> #{model.schema_name rescue model.to_s}"
@@ -468,7 +469,7 @@ module Setup
       model.affected_models.each { |model| do_deconstantize(model, report, :affected) }
     end
 
-    def deconstantize_class(klass, report={:destroyed => Set.new, :affected => Set.new}, affected=nil)
+    def deconstantize_class(klass, report={ :destroyed => Set.new, :affected => Set.new }, affected=nil)
       continue, affected = preprocess_deconstantization(klass, report, affected)
       return report unless continue
       puts "Reporting #{affected ? 'affected' : 'destroyed'} class #{klass.to_s} -> #{klass.schema_name rescue klass.to_s}"
@@ -491,10 +492,10 @@ module Setup
         end
       end
       # relations affects if their are reflected back
-      {[:embeds_one, :embeds_many] => [:embedded_in],
-       [:belongs_to] => [:has_one, :has_many],
-       [:has_one, :has_many] => [:belongs_to],
-       [:has_and_belongs_to_many] => [:has_and_belongs_to_many]}.each do |rks, rkbacks|
+      { [:embeds_one, :embeds_many] => [:embedded_in],
+        [:belongs_to] => [:has_one, :has_many],
+        [:has_one, :has_many] => [:belongs_to],
+        [:has_and_belongs_to_many] => [:has_and_belongs_to_many] }.each do |rks, rkbacks|
         rks.each do |rk|
           klass.reflect_on_all_associations(rk).each do |r|
             rkbacks.each do |rkback|

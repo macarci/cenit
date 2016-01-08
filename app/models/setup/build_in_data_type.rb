@@ -1,4 +1,5 @@
 require 'edi/formater'
+require 'xsd/core_ext'
 
 module Setup
   class BuildInDataType
@@ -11,8 +12,28 @@ module Setup
       @title ||= model.to_s.to_title
     end
 
+    def custom_title
+      "#{Setup.to_s} | #{title}"
+    end
+
     def name
       @name ||= model.model_name.to_s
+    end
+
+    def data_type_name
+      model.to_s
+    end
+
+    def records_methods
+      []
+    end
+
+    def data_type_methods
+      []
+    end
+
+    def before_save_callbacks
+      []
     end
 
     def initialize(model)
@@ -209,19 +230,5 @@ module Setup
       MONGOID_TYPE_MAP[mongoid_type].dup
     end
 
-  end
-end
-
-class String
-
-  #TODO These code is duplicated
-  def to_title
-    self.
-      gsub(/([A-Z])(\d)/, '\1 \2').
-      gsub(/([a-z])(\d|[A-Z])/, '\1 \2').
-      gsub(/(\d)([a-z]|[A-Z])/, '\1 \2').
-      tr('_', ' ').
-      tr('-', ' ').
-      capitalize
   end
 end

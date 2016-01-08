@@ -16,11 +16,21 @@ module RailsAdmin
         end
         configure property.name, type do
           visible { property.visible? }
-          label { property.name.to_s.titleize }
+          label { property.name.to_s.to_title }
           filterable { property.filterable? }
           required { property.required? }
           valid_length { {} }
           enum { enumeration } if enumeration
+          if title = property.title
+            label { title }
+          end
+          if description = property.description
+            description = (property.required? ? 'Required. ' : 'Optional. ') + description
+            help { description }
+          end
+          if g = property.group
+            group g.to_sym
+          end
           if property.is_a?(RailsAdmin::MongoffAssociation)
             # associated_collection_cache_all true
             pretty_value do
@@ -63,11 +73,15 @@ module RailsAdmin
     end
 
     def contextualized_label(context = nil)
-      case context
-      when nil
-        target.data_type.title
+      if target.parent
+        target.to_s.split('::').last
       else
-        target.data_type.custom_title
+        case context
+        when nil
+          target.data_type.title
+        else
+          target.data_type.custom_title
+        end
       end
     end
 
