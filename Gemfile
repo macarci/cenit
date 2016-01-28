@@ -19,7 +19,8 @@ gem 'haml-rails'
 gem 'figaro'
 gem 'unicorn', '4.9.0'
 gem 'raml_parser', git: 'https://github.com/asnioby/raml_parser', branch: 'develop'
-gem 'xmldsig'
+gem 'xmldsig', git: 'https://github.com/benoist/xmldsig', branch: 'master'
+#gem 'xmldsig'
 
 group :doc do
   gem 'sdoc', require: false
@@ -85,6 +86,7 @@ gem 'wannabe_bool'
 gem 'parser'
 gem 'oauth'
 gem 'bootstrap-wysihtml5-rails'
+gem "wysiwyg-rails", "~> 1.2.7"
 
 gem 'cenit_cmd', git: 'https://github.com/openjaf/cenit_cmd.git'
 gem 'jeweler'
@@ -94,3 +96,4 @@ gem 'httmultiparty'
 
 gem 'oauth2'
 gem "octokit"
+gem 'exception_notification'
