@@ -2403,4 +2403,47 @@ RailsAdmin.config do |config|
     navigation_label 'Administration'
   end
 
+  config.model Setup::FileDescriptor do
+    edit do
+      field :file_ref do
+        partial 'form_transformation'
+      end
+    end
+
+  end
+
+  config.model Forms::FileRef do
+    register_instance_option(:discard_submit_buttons) do
+      true
+    end
+    edit do
+      field :library do
+        inline_edit false
+        inline_add false
+        associated_collection_scope do
+          library = bindings[:object].library
+          Proc.new { |scope|
+            if library
+              scope.where(id: library.id)
+            else
+              scope
+            end
+          }
+        end
+        help do
+          bindings[:object].library.present? ? 'Selected' : 'Select a library'
+        end
+      end
+      field :file_model do
+        visible { bindings[:object].library.present? }
+        help do
+          bindings[:object].file_model.present? ? 'Selected' : 'Select a file model'
+        end
+      end
+      field :file_name do
+        visible { (obj = bindings[:object]).library.present? && obj.file_model.present? }
+        help ''
+      end
+    end
+  end
 end
