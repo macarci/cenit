@@ -6,7 +6,7 @@ module Setup
 
     Setup::Models.exclude_actions_for self, :new, :edit, :translator_update, :convert, :send_to_flow, :delete_all, :delete, :import
 
-    BuildInDataType.regist(self).with(:name, :shared_version, :authors, :summary, :description, :pull_parameters, :dependencies, :data).referenced_by(:name, :shared_version)
+    BuildInDataType.regist(self).with(:name, :shared_version, :authors, :summary, :description, :pull_parameters, :dependencies, :data, :readme).referenced_by(:name, :shared_version)
 
     belongs_to :shared_name, class_name: Setup::SharedName.to_s, inverse_of: nil
 
@@ -23,14 +23,12 @@ module Setup
     has_and_belongs_to_many :dependencies, class_name: Setup::SharedCollection.to_s, inverse_of: nil
 
     field :pull_count, type: Integer
-
+    field :readme, type: String
     field :data
 
     before_validation do
       authors << Setup::CollectionAuthor.new(name: ::User.current.name, email: ::User.current.email) if authors.empty?
     end
-
-    attr_readonly :shared_version
 
     validates_presence_of :authors, :summary, :description
     validates_format_of :shared_version, with: /\A(0|[1-9]\d*)(\.(0|[1-9]\d*))*\Z/
@@ -39,7 +37,7 @@ module Setup
     accepts_nested_attributes_for :authors, allow_destroy: true
     accepts_nested_attributes_for :pull_parameters, allow_destroy: true
 
-    before_save :check_dependencies, :validate_configuration, :ensure_shared_name, :save_source_collection, :categorize, :on_saving
+    before_save :check_dependencies, :validate_configuration, :ensure_shared_name, :save_source_collection, :categorize, :sanitize_data, :on_saving
 
     def ready_to_save?
       !(@_selecting_connections || @_selecting_dependencies)
@@ -57,10 +55,44 @@ module Setup
       value
     end
 
+    def write_attribute(name, value)
+      super
+      case name.to_s
+      when 'data'
+        if (readme = data.delete('readme')).present?
+          self.readme = readme
+        end unless @source_readme
+      when 'source_collection_id'
+        if (readme = source_collection && source_collection.readme).present?
+          @source_readme = true
+          self.readme = readme
+        end
+      end if changed_attributes.has_key?(name)
+    end
+
+    def sanitize_data
+      data = self.data
+      data = JSON.parse(data) unless data.is_a?(Hash)
+      #Stringify parameter values
+      %w(connections webhooks).each do |entry|
+        (data[entry] || []).each do |e|
+          %w(headers parameters template_parameters).each do |params_key|
+            if params = e[params_key]
+              params.each { |param| param['value'] = param['value'].to_s }
+            end
+          end
+        end
+      end
+      self.data = data
+      errors.blank?
+    end
+
+    attr_accessor :pulling
+
     def on_saving
       attributes['data'] = attributes['data'].to_json unless attributes['data'].is_a?(String)
       changed_attributes.keys.each do |attr|
-        reset_attribute!(attr) if %w(pull_count).include?(attr)
+        reset_attribute!(attr) if %w(shared_version).include?(attr) || (%w(pull_count).include?(attr) && !pulling)
       end unless Account.current && Account.current.super_admin?
       true
     end
@@ -105,10 +137,21 @@ module Setup
         end
         errors.add(:pull_parameters, 'is not valid') if pull_parameters.any? { |pull_parameter| pull_parameter.errors.present? }
       end
-      dependencies_hash_data.each do |entry, dependency_values|
-        next if entry == 'name'
-        if values = hash_data[entry]
-          dependency_values.each { |value| values.delete(value) }
+      hash_data.each do |entry, values|
+        next if Setup::Collection::NO_DATA_FIELDS.include?(entry) || values.blank?
+        if (dependency_values = dependencies_hash_data[entry]).present?
+          model = "Setup::#{entry.singularize.camelize}".constantize rescue nil
+          if model
+            values.each do |value|
+              criteria = {}
+              model.data_type.get_referenced_by.each do |field|
+                if v = value[field.to_s]
+                  criteria[field.to_s] = v
+                end
+              end
+              values.delete(value) if (dependency_value = dependency_values.detect { |v| Cenit::Utility.match?(v, criteria) }) && value == dependency_value
+            end
+          end
         end
       end
       hash_data.delete_if { |_, values| values.empty? }
@@ -117,6 +160,9 @@ module Setup
         if ::User.current.name.blank?
           ::User.current.name = authors.first.name
           ::User.current.save
+        end
+        if (data_readme = hash_data.delete('readme')) && readme.blank?
+          self.readme = data_readme
         end
         true
       else
@@ -164,7 +210,7 @@ module Setup
     end
 
     def categorize
-      shared = data.keys.select { |key| key != 'name' }
+      shared = data.keys.select { |key| Setup::Collection::NO_DATA_FIELDS.exclude?(key) }
       self.category =
         shared.length == 1 && %w(libraries translators algorithms).include?(shared[0]) ? shared[0].singularize.capitalize : 'Collection'
       true
@@ -181,11 +227,11 @@ module Setup
     def data_with(parameters = {})
       hash_data = dependencies_data.deep_merge(data) { |_, val1, val2| Cenit::Utility.array_hash_merge(val1, val2) }
       hash_data.each do |key, values|
-        next if key == 'name'
+        next if Setup::Collection::NO_DATA_FIELDS.include?(key)
         hash = values.inject({}) do |hash, item|
           name =
-            if name = item['namespace']
-              {namespace: name, name: item['name']}
+            if (name = item['namespace'])
+              { namespace: name, name: item['name'] }
             else
               item['name']
             end
@@ -194,7 +240,7 @@ module Setup
         hash_data[key] = hash.values.to_a unless hash.size == values.length
       end
       parameters.each do |id, value|
-        if pull_parameter = pull_parameters.where(id: id).first
+        if (pull_parameter = pull_parameters.where(id: id).first)
           pull_parameter.process_on(hash_data, value)
         end
       end

@@ -19,8 +19,8 @@ gem 'haml-rails'
 gem 'figaro'
 gem 'unicorn', '4.9.0'
 gem 'raml_parser', git: 'https://github.com/asnioby/raml_parser', branch: 'develop'
-gem 'xmldsig', git: 'https://github.com/benoist/xmldsig', branch: 'master'
-#gem 'xmldsig'
+gem 'xmldsig'
+gem 'spreadsheet'
 
 group :doc do
   gem 'sdoc', require: false
@@ -60,7 +60,7 @@ end
 
 gem 'mongoid'
 gem 'bson_ext'
-gem 'rails_admin'
+gem 'rails_admin', '~> 0.7.0'
 gem 'mongoid-history'
 gem 'mongoid-audit'
 
@@ -85,8 +85,7 @@ gem 'codemirror-rails'
 gem 'wannabe_bool'
 gem 'parser'
 gem 'oauth'
-gem 'bootstrap-wysihtml5-rails'
-gem "wysiwyg-rails", "~> 1.2.7"
+gem 'bootstrap-wysihtml5-rails', '> 0.3.1.24'
 
 gem 'cenit_cmd', git: 'https://github.com/openjaf/cenit_cmd.git'
 gem 'jeweler'
@@ -97,3 +96,5 @@ gem 'httmultiparty'
 gem 'oauth2'
 gem "octokit"
 gem 'exception_notification'
+
+gem 'mime'

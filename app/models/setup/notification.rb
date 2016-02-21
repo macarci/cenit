@@ -12,6 +12,7 @@ module Setup
     mount_uploader :attachment, AccountUploader
     belongs_to :task, class_name: Setup::Task.to_s, inverse_of: :notifications
 
+    default_scope -> { desc(:created_at) }
 
     validates_presence_of :type, :message
     validates_inclusion_of :type, in: ->(n) { n.type_enum }
@@ -42,9 +43,27 @@ module Setup
       "[#{type.to_s.capitalize}] #{message.length > 100 ? message.to(100) + '...' : message}"
     end
 
+    def color
+      Setup::Notification.type_color(type)
+    end
+
     class << self
+
       def type_enum
         [:error, :warning, :notice, :info]
+      end
+
+      def type_color(type)
+        case type
+        when :info
+          'green'
+        when :notice
+          'blue'
+        when :warning
+          'orange'
+        else
+          'red'
+        end
       end
 
       def create_from(exception)

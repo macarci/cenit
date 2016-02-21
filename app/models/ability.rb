@@ -33,8 +33,6 @@ class Ability
               Setup::SharedName,
               CenitToken,
               Script,
-              Setup::Raml,
-              Setup::RamlReference,
               Setup::DelayedMessage,
               Setup::SystemNotification
             ]
@@ -42,7 +40,7 @@ class Ability
         can :destroy, [Setup::SharedCollection, Setup::DataType, Setup::Storage]
       else
         cannot :access, [Setup::SharedName, Setup::DelayedMessage, Setup::SystemNotification]
-        cannot :destroy, [Setup::SharedCollection, Setup::Raml, Setup::Storage]
+        cannot :destroy, [Setup::SharedCollection, Setup::Storage]
       end
 
       can :destroy, Setup::Task, Setup::Task.destroy_conditions
@@ -68,10 +66,16 @@ class Ability
               end
             end
           end
-          Setup::Models.each do |model, excluded_actions|
+          Setup::Models.each_excluded_action do |model, excluded_actions|
             non_root.each do |action|
               models = (hash[key = action.authorization_key] ||= Set.new)
               models << model if relevant_rules_for_match(action.authorization_key, model).empty? && !(excluded_actions.include?(:all) || excluded_actions.include?(action.key))
+            end
+          end
+          Setup::Models.each_included_action do |model, included_actions|
+            non_root.each do |action|
+              models = (hash[key = action.authorization_key] ||= Set.new)
+              models << model if included_actions.include?(action.key)
             end
           end
           new_hash = {}
@@ -89,18 +93,11 @@ class Ability
         can keys, models
       end
 
-      models = Setup::SchemaDataType.where(model_loaded: true).collect(&:model)
-      models.delete(nil)
-      can :manage, models
       can :manage, Mongoff::Model
       can :manage, Mongoff::Record
 
-      file_models = Setup::FileDataType.where(model_loaded: true).collect(&:model)
-      file_models.delete(nil)
-      can [:index, :show, :upload_file, :download_file, :destroy, :import, :edi_export, :delete_all, :send_to_flow, :data_type], file_models
-
     else
-      can [:index, :show], [Setup::SharedCollection, Setup::Raml, Setup::RamlReference]
+      can [:index, :show], [Setup::SharedCollection]
     end
 
   end

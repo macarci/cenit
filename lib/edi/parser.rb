@@ -52,13 +52,13 @@ module Edi
             next if content_property
             property_model = model.property_model(property)
             property_schema = property_model.schema
-            if xml_opts = property_schema['xml'] || {}
+            if (xml_opts = property_schema['xml'] || {})
               content_property = property if xml_opts['content']
             end
           end
         end
         element.attribute_nodes.each do |attr|
-          if property = model.property_for(attr.name)
+          if (property = model.property_for(attr.name))
             value =
               if model.property_model(property).schema['type'] == 'array'
                 attr.value.split(' ')
@@ -80,21 +80,21 @@ module Edi
         else
           elements = element.element_children.to_a
           elements.each do |sub_element|
-            if property = model.property_for(qualify_name(sub_element))
+            if (property = model.property_for(qualify_name(sub_element)))
               property_model = model.property_model(property)
               property_schema = model.property_schema(property)
               if property_model.modelable?
                 if property_schema['type'] == 'array'
                   property_schema = property_model.schema
-                  unless association = record.send(property)
+                  unless (association = record.send(property))
                     record.send("#{property}=", [])
                     association = record.send(property)
                   end
-                  if sub_record = do_parse_xml(data_type, property_model, sub_element, options, property_schema, nil, nil, property)
+                  if (sub_record = do_parse_xml(data_type, property_model, sub_element, options, property_schema, nil, nil, property))
                     association << sub_record
                   end
                 else # type 'object'
-                  if sub_record = do_parse_xml(data_type, property_model, sub_element, options, property_schema, nil, nil, property)
+                  if (sub_record = do_parse_xml(data_type, property_model, sub_element, options, property_schema, nil, nil, property))
                     record.send("#{property}=", sub_record)
                   end
                 end
@@ -118,10 +118,15 @@ module Edi
             if json.is_a?(Hash) &&
               options[:ignore].none? { |ignored_field| primary_fields.include?(ignored_field) } &&
               (criteria = json.select { |key, _| primary_fields.include?(key.to_sym) }).size == primary_fields.count
-              record = (container && container.detect { |item| Cenit::Utility.match?(item, criteria) }) || model.where(criteria).first
+              record = (container && (Cenit::Utility.find_record(criteria, container) || container.detect { |item| Cenit::Utility.match?(item, criteria) })) || model.where(criteria).first
             end
             if record
               updating = true
+              unless model == record.orm_model
+                model = record.orm_model
+                data_type = model.data_type
+                json_schema = data_type.merged_schema
+              end
             else
               (record = model.new).instance_variable_set(:@dynamically_created, true)
             end
@@ -150,23 +155,25 @@ module Edi
                 association = record.send(property_name)
                 next unless updating || association.blank?
                 items_schema = data_type.merge_schema(property_schema['items'] || {})
-                unless !resetting.include?(property_name) && (options[:add_only] || (association && property_schema['referenced']))
-                  record.send("#{property_name}=", [])
+                if resetting.include?(property_name) || !options[:add_only]
+                  record.send("#{property_name}=", []) unless association.blank?
                   association = record.send(property_name)
                 end
-                if property_value = json[name]
+                if (property_value = json[name])
                   property_value = [property_value] unless property_value.is_a?(Array)
                   persist = property_model && property_model.persistable?
                   property_value.each do |sub_value|
                     if persist && sub_value['_reference']
                       sub_value = Cenit::Utility.deep_remove(sub_value, '_reference')
-                      record.instance_variable_set(:@_references, references = {}) unless references = record.instance_variable_get(:@_references)
-                      (references[property_name] ||= []) << { model: property_model, criteria: sub_value }
-                      if sub_value = Cenit::Utility.find_record(association, sub_value)
-                        association.delete(sub_value)
+                      unless Cenit::Utility.find_record(sub_value, association)
+                        unless (references = record.instance_variable_get(:@_references))
+                          record.instance_variable_set(:@_references, references = {})
+                        end
+                        (references[property_name] ||= []) << { model: property_model, criteria: sub_value }
                       end
                     else
-                      if !association.include?(sub_value = do_parse_json(data_type, property_model, sub_value, options, items_schema, nil, nil, association))
+                      sub_value = do_parse_json(data_type, property_model, sub_value, options, items_schema, nil, nil, association)
+                      unless association.include?(sub_value)
                         association << sub_value
                       end
                     end
@@ -174,7 +181,7 @@ module Edi
                 end
               when 'object'
                 next unless updating || record.send(property_name).nil?
-                unless (property_value = json[name]).nil?
+                if (property_value = json[name])
                   if property_value.is_a?(Hash) && property_value['_reference']
                     record.send("#{property_name}=", nil)
                     property_value = Cenit::Utility.deep_remove(property_value, '_reference')
@@ -208,7 +215,7 @@ module Edi
         else # Simple content or array
           content_property = nil
           property_schema = nil
-          if properties = json_schema['properties']
+          if (properties = json_schema['properties'])
             if properties.size == 1
               content_property = properties.keys.first
               property_schema = data_type.merge_schema(properties.values.first)
@@ -235,13 +242,15 @@ module Edi
                 json.each do |sub_value|
                   if persist && sub_value['_reference']
                     sub_value = Cenit::Utility.deep_remove(sub_value, '_reference')
-                    record.instance_variable_set(:@_references, references = {}) unless references = record.instance_variable_get(:@_references)
-                    (references[property_name] ||= []) << { model: property_model, criteria: sub_value }
-                    if sub_value = Cenit::Utility.find_record(association, sub_value)
-                      association.delete(sub_value)
+                    unless Cenit::Utility.find_record(sub_value, association)
+                      unless (references = record.instance_variable_get(:@_references))
+                        record.instance_variable_set(:@_references, references = {})
+                      end
+                      (references[property_name] ||= []) << { model: property_model, criteria: sub_value }
                     end
                   else
-                    if !association.include?(sub_value = do_parse_json(data_type, property_model, sub_value, options, items_schema, nil, nil, association))
+                    sub_value = do_parse_json(data_type, property_model, sub_value, options, items_schema, nil, nil, association)
+                    unless association.include?(sub_value)
                       association << sub_value
                     end
                   end
@@ -255,6 +264,7 @@ module Edi
           end
         end
         record.try(:run_after_initialized)
+        record.instance_variable_set(:@_edi_parsed, true)
         record
       end
 

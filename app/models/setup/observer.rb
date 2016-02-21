@@ -2,9 +2,9 @@ module Setup
   class Observer < Event
     include TriggersFormatter
 
-    BuildInDataType.regist(self).referenced_by(:namespace, :name).including(:data_type)
+    BuildInDataType.regist(self).referenced_by(:namespace, :name)
 
-    belongs_to :data_type, class_name: Setup::DataType.to_s, inverse_of: :events
+    belongs_to :data_type, class_name: Setup::DataType.to_s, inverse_of: nil
     belongs_to :trigger_evaluator, class_name: Setup::Algorithm.to_s, inverse_of: nil
     field :triggers, type: String
 
@@ -39,7 +39,7 @@ module Setup
       def lookup(obj_now, obj_before = nil)
         where(data_type: obj_now.orm_model.data_type).each do |e|
           next unless e.triggers_apply_to?(obj_now, obj_before)
-          Setup::Flow.where(active: true, event: e).each { |f| f.process(source_id: obj_now.id.to_s) }
+          Setup::Flow.where(active: true, event: e).each { |f| f.join_process(source_id: obj_now.id.to_s) }
         end
       end
     end
