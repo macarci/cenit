@@ -3,6 +3,8 @@ module Api::V1
     before_action :authorize_account, :save_request_data, except: [:new_account, :cors_check, :auth]
     before_action :find_item, only: [:show, :destroy, :pull, :run]
     before_action :authorize_action, except: [:auth, :new_account, :cors_check, :push]
+    before_action :doorkeeper_authorize!
+
     rescue_from Exception, :with => :exception_handler
     respond_to :json
 
