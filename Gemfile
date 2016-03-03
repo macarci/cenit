@@ -18,9 +18,13 @@ gem 'builder'
 gem 'haml-rails'
 gem 'figaro'
 gem 'unicorn', '4.9.0'
-gem 'raml_parser', git: 'https://github.com/asnioby/raml_parser', branch: 'develop'
+gem 'raml_parser', path: '../raml_parser'
 gem 'xmldsig'
 gem 'spreadsheet'
+
+gem 'doorkeeper'
+gem "doorkeeper-mongodb", github: "doorkeeper-gem/doorkeeper-mongodb"
+gem 'doorkeeper-openid_connect', '~> 1.0.0'
 
 group :doc do
   gem 'sdoc', require: false
@@ -41,6 +45,7 @@ group :development, :test do
   gem 'rails_layout'
   gem 'ffaker'
   gem 'rubocop'
+  gem 'thin'
 end
 
 group :test do
@@ -87,7 +92,7 @@ gem 'parser'
 gem 'oauth'
 gem 'bootstrap-wysihtml5-rails', '> 0.3.1.24'
 
-gem 'cenit_cmd', git: 'https://github.com/openjaf/cenit_cmd.git'
+gem 'cenit_cmd', path: '../cenit_cmd'
 gem 'jeweler'
 gem 'github_api'
 gem 'captcha'
