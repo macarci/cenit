@@ -1,21 +1,5 @@
-# require 'oauth2'
-require 'oauth2/response'
+require 'oauth2'
 
-n = OAuth2::Response.new(nil)
-
-class A
-  KK = []
+OAuth2::Response.register_parser(:text, %w(text/plain text/html)) do |body|
+  MultiJson.load(body) rescue Rack::Utils.parse_query(body) rescue body
 end
-
-# puts "--------------------------------------------------"
-#
-# puts OAuth2::Response.name
-# puts "cnsts: #{n.constants}"
-
-
-OAuth2::Response::PARSERS[:text] = ->(body) { MultiJson.load(body) rescue Rack::Utils.parse_query(body) }
-
-puts "--------------------------------------------------"
-
-
-OAuth2::Response::CONTENT_TYPES['text/html'] = :text
