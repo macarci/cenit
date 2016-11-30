@@ -32,7 +32,7 @@ class Account
   deny :all
 
   belongs_to :owner, class_name: User.to_s, inverse_of: :accounts
-  has_and_belongs_to_many :users, class_name: User.to_s, inverse_of: :member_accounts
+  has_many :memberships
 
   field :name, type: String
   field :meta, type: Hash, default: {}
@@ -74,6 +74,10 @@ class Account
     owner
   end
 
+  def users
+    ([owner] + memberships.map(&:user)).compact.uniq
+  end
+
   def read_attribute(name)
     (!(value = super).nil? &&
 
@@ -84,7 +88,7 @@ class Account
   end
 
   def inspect_updated_fields
-    users << owner unless user_ids.include?(owner.id)
+    Membership.create(user: owner, account: self) unless users.map(&:id).include?(owner.id)
     super
   end
 
