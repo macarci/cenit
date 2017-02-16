@@ -10,6 +10,16 @@ module Setup
       bind_bindings
     end
 
+    def bind_bindings
+      super unless origin == :default
+    end
+
+    def cross(origin)
+      r = super
+      clear_bindings if origin == :default
+      r
+    end
+
     module ClassMethods
 
       def binding_belongs_to(name, *options)
