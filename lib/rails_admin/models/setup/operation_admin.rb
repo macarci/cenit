@@ -28,9 +28,18 @@ module RailsAdmin
               RailsAdmin::Config::Fields::Base::SHARED_READ_ONLY
             end
 
-            configure :metadata, :json_value
+            configure :metadata, :json_value do
+              RailsAdmin::Config::Fields::Base::SHARED_READ_ONLY
+            end
 
-            fields :resource, :method, :description, :parameters
+            list do
+              field :resource
+              field :method
+              field :description
+              field :parameters
+            end
+
+            fields :resource, :method, :description, :parameters, :metadata
 
             filter_query_fields :none
           end

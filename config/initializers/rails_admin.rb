@@ -469,6 +469,8 @@ RailsAdmin.config do |config|
 
   Setup::WebHookNotification
 
+  Setup::ResourceChannel
+
   Setup::Event
 
   Setup::Observer

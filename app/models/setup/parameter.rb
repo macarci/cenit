@@ -15,6 +15,10 @@ module Setup
 
     validates_presence_of :key
 
+    def meta_type
+      (metadata['type'] || :string).to_sym
+    end
+
     def to_s
       "#{key}: #{value}"
     end
