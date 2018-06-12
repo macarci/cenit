@@ -469,6 +469,12 @@ RailsAdmin.config do |config|
 
   Setup::WebHookNotification
 
+  Setup::Channel
+
+  Setup::IncomeChannel
+
+  Setup::OutgoingChannel
+
   Setup::ResourceChannel
 
   Setup::Event

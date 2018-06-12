@@ -12,6 +12,8 @@ module RailsAdmin
             label 'Resource Channel'
             weight 410
 
+            hide_on_navigation
+
             wizard_steps do
               {
                 start:
@@ -74,7 +76,7 @@ module RailsAdmin
                 visible { bindings[:object].operation }
               end
 
-              field :item_type do
+              field :data_type do
                 #shared_read_only
                 visible { bindings[:object].operation }
               end

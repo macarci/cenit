@@ -1,8 +1,5 @@
 module Setup
-  class ResourceChannel
-    include CenitScoped
-    include NamespaceNamed
-    include CustomTitle
+  class ResourceChannel < IncomeChannel
     include Parameters
     include RailsAdmin::Models::Setup::ResourceChannelAdmin
 
@@ -13,7 +10,6 @@ module Setup
     parameters :parameters, :headers, :template_parameters
 
     belongs_to :response_type, class_name: Setup::DataType.to_s, inverse_of: nil
-    belongs_to :item_type, class_name: Setup::DataType.to_s, inverse_of: nil
 
     field :pagination_schema, type: Symbol
     field :pagination_attrs, type: Hash, default: {}
@@ -24,7 +20,7 @@ module Setup
       if operation
         self.pagination_schema ||= pagination_model.default_pagination_schema
         self.response_type ||= pagination_model.default_response_type
-        self.item_type ||= pagination_model.default_item_type
+        self.data_type ||= pagination_model.default_data_type
       end
     end
 
@@ -212,7 +208,7 @@ module Setup
 
     class PaginationModel < Mongoff::Model
 
-      attr_reader :channel, :key, :ns_dt, :default_response_type, :default_pagination_schema, :default_item_type
+      attr_reader :channel, :key, :ns_dt, :default_response_type, :default_pagination_schema, :default_data_type
 
       def operation
         channel.operation
@@ -276,7 +272,7 @@ module Setup
           }
           unless enums[:items].empty?
             properties['items']['default'] = enums[:items].first
-            _, @default_item_type = Mongoff::Model.check_referenced_schema(response_schema['properties'][enums[:items].first], ns_dt)
+            _, @default_data_type = Mongoff::Model.check_referenced_schema(response_schema['properties'][enums[:items].first], ns_dt)
           end
           properties['next_page_token'] = {
             'description' => 'The entry in the response schema to take the next page token',
