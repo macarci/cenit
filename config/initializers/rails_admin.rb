@@ -463,6 +463,8 @@ RailsAdmin.config do |config|
 
   Setup::Flow
 
+  Setup::InOutFlow
+
   Setup::Notification
 
   Setup::EmailNotification
