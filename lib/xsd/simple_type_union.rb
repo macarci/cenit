@@ -8,7 +8,7 @@ module Xsd
     def initialize(args)
       super
       @types = Set.new
-      if types = args[:types]
+      if (types = args[:types])
         types.each { |type| @types << type }
       end
     end
@@ -18,7 +18,7 @@ module Xsd
     end
 
     def to_json_schema
-      documenting({ 'anyOf' => types.collect { |type| (type.is_a?(String) ? qualify_type(type) : type).to_json_schema } })
+      documenting({ 'anyOf' => types.collect { |type| (type.is_a?(String) ? qualify_type_ref(type) : type).to_json_schema } })
     end
   end
 end

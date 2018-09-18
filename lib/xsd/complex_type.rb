@@ -35,7 +35,7 @@ module Xsd
         json_schema['title'] = name.to_title
       end
       if @base
-        if (@base = qualify_type(@base).to_json_schema)['$ref']
+        if (@base = qualify_type_ref(@base).to_json_schema)['$ref']
           @base = @base['$ref']
         end
         json_schema['extends'] = @base

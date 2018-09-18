@@ -22,7 +22,7 @@ module Xsd
       properties = json_schema['properties'] ||= {}
       attributes.each do |a|
         if a.is_a?(Xsd::AttributeGroup)
-          ref = qualify_attribute_group(a.ref)
+          ref = qualify_attribute_group_ref(a.ref)
           if refs
             refs = json_schema['$ref'] = [refs] unless refs.is_a?(Array)
             refs << ref

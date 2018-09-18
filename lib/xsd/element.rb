@@ -14,11 +14,11 @@ module Xsd
     end
 
     def to_json_schema
-      return documenting(qualify_element(ref).to_json_schema) if ref
+      return documenting(qualify_element_ref(ref).to_json_schema) if ref
       json_schema =
         {
           'title' => name.to_title,
-          'edi' => { 'segment' => qualify(name) },
+          'edi' => { 'segment' => qualify_decl(name) },
           'xml' => { 'namespace' => xmlns(:default), 'content_property' => false },
           'type' => 'object'
         }
@@ -36,7 +36,7 @@ module Xsd
             }
           end
         else
-          if (type_schema = qualify_type(type_name).to_json_schema)['$ref']
+          if (type_schema = qualify_type_ref(type_name).to_json_schema)['$ref']
             type_schema = type_schema['$ref']
           end
           { 'extends' => type_schema }

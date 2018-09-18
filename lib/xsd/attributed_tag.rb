@@ -3,10 +3,13 @@ module Xsd
 
     def initialize(args)
       super
-      @xmlns = {'' => nil}
-      args[:attributes].each { |attr| @xmlns[attr[0].from(attr[0].index(':') + 1)] = attr[1] if attr[0] =~ /\Axmlns:/ }
-      if (default = @xmlns.delete(''))
-        @xmls[:default] = default
+      @xmlns = { }
+      args[:attributes].each do |attr|
+        if attr[0] == 'xmlns'
+          @xmlns[:default] = attr[1]
+        elsif attr[0] =~ /\Axmlns:/
+          @xmlns[attr[0].from(attr[0].index(':') + 1)] = attr[1]
+        end
       end
     end
 

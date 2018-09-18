@@ -6,7 +6,7 @@ module Xsd
     tag 'attributeGroup'
 
     def to_json_schema
-      return documenting(qualify_attribute_group(ref).to_json_schema) if ref
+      return documenting(qualify_attribute_group_ref(ref).to_json_schema) if ref
       json_schema = documenting('type' => 'object')
       inject_attributes(json_schema)
     end

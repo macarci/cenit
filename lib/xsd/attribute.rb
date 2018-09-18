@@ -30,9 +30,9 @@ module Xsd
     end
 
     def to_json_schema
-      return documenting(qualify_attribute(ref).to_json_schema) if ref
+      return documenting(qualify_attribute_ref(ref).to_json_schema) if ref
       if (schema_type = type).is_a?(String)
-        schema_type = qualify_type(schema_type)
+        schema_type = qualify_type_ref(schema_type)
       end
       schema_type.to_json_schema.merge(documenting('title' => name.to_title, 'xml' => { 'attribute' => true }))
     end

@@ -26,7 +26,7 @@ module Xsd
             ]
           }
         else
-          qualify_type(item_type).to_json_schema
+          qualify_type_ref(item_type).to_json_schema
         end
       documenting('type' => 'array',
                   'items' => items_schema,

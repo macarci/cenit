@@ -5,12 +5,13 @@ module Xsd
 
     attr_reader :name_prefix
     attr_reader :names
+    attr_reader :target_ns
 
     def initialize(args)
       super
-      targetNamespace = (attr = args[:attributes].detect { |attr| attr[0] == 'targetNamespace' }) ? attr[1] : nil
-      raise Exception.new('Default and target does not match') if (default = @xmlns[:default]) && default != targetNamespace
-      @xmlns[:default] = targetNamespace
+      if (target_ns = attributeValue('targetNamespace', args[:attributes]))
+        @xmlns[:target_ns] = target_ns
+      end
       @attributes = []
       @attribute_groups = []
       @elements = []
@@ -31,7 +32,7 @@ module Xsd
     }.each do |tag_name, store_id|
       class_eval("def when_#{tag_name}_end(#{tag_name})
           @#{store_id} << #{tag_name}
-          @names << qualify_with(:#{store_id.to_s.chop}, #{tag_name}.name, false)
+          @names << qualify_decl_with(:#{store_id.to_s.chop}, #{tag_name}.name, false)
         end")
     end
 
@@ -71,7 +72,7 @@ module Xsd
         element: @elements,
       }.each do |qualify_method, store|
         store.each do |tag|
-          name = qualify_with(qualify_method, tag.name)
+          name = qualify_decl_with(qualify_method, tag.name)
           raise Exception.new("name clash: #{name}") if schemas[name]
           schemas[name] = tag.to_json_schema
         end

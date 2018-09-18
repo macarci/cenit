@@ -43,20 +43,20 @@ module Xsd
       parent ? parent.included?(qualified_name, visited) : false
     end
 
-    def qualify_element(name)
-      qualify_with(:element, name)
+    def qualify_element_ref(name)
+      qualify_ref_with(:element, name)
     end
 
-    def qualify_type(name)
-      qualify_with(:type, name)
+    def qualify_type_ref(name)
+      qualify_ref_with(:type, name)
     end
 
-    def qualify_attribute_group(name)
-      qualify_with(:attribute_group, name)
+    def qualify_attribute_group_ref(name)
+      qualify_ref_with(:attribute_group, name)
     end
 
-    def qualify_attribute(name)
-      qualify_with(:attribute, name)
+    def qualify_attribute_ref(name)
+      qualify_ref_with(:attribute, name)
     end
 
     def xmlns(ns)
@@ -77,16 +77,38 @@ module Xsd
 
     protected
 
-    def qualify_with(qualify_method, name, check_include = true)
-      check_include && included?(qn = "#{name_prefix}#{qualify_method}:#{name}") ? qn : "#{name_prefix}#{qualify_method}:#{qualify(name)}"
+    def qualify_ref_with(qualify_method, name, check_include = true)
+      qualify_with(qualify_method, name, check_include, :default)
     end
 
-    def qualify(name)
-      ns = (i = name.rindex(':')) ? xmlns(name[0..i-1]) : xmlns(:default)
+    def qualify_decl_with(qualify_method, name, check_include = true)
+      qualify_with(qualify_method, name, check_include, :target_ns)
+    end
+
+    def qualify_ref(name)
+      qualify(name, :default)
+    end
+
+    def qualify_decl(name)
+      qualify(name, :target_ns)
+    end
+
+    private
+
+    def qualify_with(qualify_method, name, check_include, default_key)
+      if check_include && included?(qn = "#{name_prefix}#{qualify_method}:#{name}")
+        qn
+      else
+        "#{name_prefix}#{qualify_method}:#{qualify(name, default_key)}"
+      end
+    end
+
+    def qualify(name, default_key)
+      ns = (i = name.rindex(':')) ? xmlns(name[0..i - 1]) : xmlns(default_key)
       if ns.blank?
         name
       else
-        "#{ns}:#{i ? name.from(i+1) : name}"
+        "#{ns}:#{i ? name.from(i + 1) : name}"
       end
     end
   end
