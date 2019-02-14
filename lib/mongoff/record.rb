@@ -23,7 +23,7 @@ module Mongoff
         end
       end
       assign_attributes(attributes)
-      Cenit::Utility.for_each_node_starting_at(self) { |record| record.instance_variable_set(:@new_record, false) } unless @new_record
+      # Cenit::Utility.for_each_node_starting_at(self) { |record| record.instance_variable_set(:@new_record, false) } unless @new_record
       unless (id_schema = model.property_schema(:_id)) && id_schema.key?('type')
         @document[:_id] ||= BSON::ObjectId.new
       end

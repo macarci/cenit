@@ -15,7 +15,11 @@ module Mongoff
       array.each_with_index do |item, index|
         record =
           if item.is_a?(BSON::Document)
-            Record.new(model, item)
+            if referenced
+              Record.new(model, item)
+            else
+              item
+            end
           elsif item.is_a?(Mongoff::Record)
             item
           else
@@ -56,8 +60,16 @@ module Mongoff
       @records.empty?
     end
 
-    def each(*args, &blk)
-      @records.each { |record| yield record if record } #TODO Sanitize for broken ids
+    def each(*_args)
+      if block_given?
+        @records.each_with_index do |record, index|
+          if record.is_a?(BSON::Document)
+            record = Record.new(model, record)
+            @records[index] = record
+          end
+          yield record if record
+        end
+      end
     end
 
     def [](*several_variants)
@@ -67,7 +79,9 @@ module Mongoff
     def << item
       if item.is_a?(Record) || item.class.respond_to?(:data_type) || item.is_a?(Hash)
         if item.is_a?(BSON::Document)
-          item = Record.new(model, item)
+          if @referenced
+            item = Record.new(model, item)
+          end
         elsif item.is_a?(Hash)
           item = model.new_from_json(item)
         end
@@ -76,7 +90,11 @@ module Mongoff
           if @referenced
             array << item.id unless array.include?(item.id)
           else
-            array << item.attributes unless array.any? { |doc| doc['_id'] == item.id }
+            if item.is_a?(Record)
+              array << item.attributes unless array.any? { |doc| doc['_id'] == item.id }
+            else
+              array << item
+            end
           end
         end
         @changed = true
