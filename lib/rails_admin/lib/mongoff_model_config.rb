@@ -67,10 +67,34 @@ module RailsAdmin
               end
               am = amc.abstract_model
               if action.is_a?(RailsAdmin::Config::Actions::Show) && !v.instance_variable_get(:@showing)
-                values = [value].flatten.select(&:present?)
+                unless (values = value).is_a?(Enumerable)
+                  values = [values].flatten
+                end
+                total = values.count
                 fields = amc.list.with(controller: bindings[:controller], view: v, object: amc.abstract_model.model.new).visible_fields
-                unless fields.length == 1 && values.length == 1
+                unless fields.length == 1 && total == 1
                   v.instance_variable_set(:@showing, true)
+                end
+                limit = 40
+                rows = []
+                values.each do |associated|
+                  break unless rows.count < limit - 5 || limit >= total
+                  next unless associated.present?
+                  can_see = !am.embedded_in?(bindings[:controller].instance_variable_get(:@abstract_model)) && (show_action = v.action(:show, am, associated))
+                  rows <<
+                    '<tr class="script_row">' +
+                      fields.collect do |field|
+                        field.bind(object: associated, view: v)
+                        "<td class=\"#{field.css_class} #{field.type_css_class}\" title=\"#{v.strip_tags(associated.to_s)}\">#{field.pretty_value}</td>"
+                      end.join +
+                      '<td class="last links"><ul class="inline list-inline">' +
+                      if can_see
+                        v.menu_for(:member, amc.abstract_model, associated, true)
+                      else
+                        ''
+                      end +
+                      '</ul></td>' +
+                      '</tr>'
                 end
                 table = <<-HTML
                     <table class="table table-condensed table-striped">
@@ -81,26 +105,20 @@ module RailsAdmin
                         <tr>
                       </thead>
                       <tbody>
-                  #{values.collect do |associated|
-                  can_see = !am.embedded_in?(bindings[:controller].instance_variable_get(:@abstract_model)) && (show_action = v.action(:show, am, associated))
-                  '<tr class="script_row">' +
-                    fields.collect do |field|
-                      field.bind(object: associated, view: v)
-                      "<td class=\"#{field.css_class} #{field.type_css_class}\" title=\"#{v.strip_tags(associated.to_s)}\">#{field.pretty_value}</td>"
-                    end.join +
-                    '<td class="last links"><ul class="inline list-inline">' +
-                    if can_see
-                      v.menu_for(:member, amc.abstract_model, associated, true)
-                    else
-                      ''
-                    end +
-                    '</ul></td>' +
-                    '</tr>'
-                end.join}
+                        #{rows.join}
                       </tbody>
                     </table>
                 HTML
                 v.instance_variable_set(:@showing, false)
+                if multiple?
+                  table += "<div class=\"clearfix total-count\">" +
+                    if total > rows.count
+                      "#{total} #{amc.label_plural} (showing #{rows.count})"
+                    else
+                      "#{total} #{amc.label_plural}"
+                    end
+                  table += '</div>'
+                end
                 table.html_safe
               else
                 max_associated_to_show = 3
@@ -109,9 +127,9 @@ module RailsAdmin
                   wording = associated.send(amc.object_label_method)
                   can_see = !am.embedded_in?(bindings[:controller].instance_variable_get(:@abstract_model)) && (show_action = v.action(:show, am, associated))
                   can_see ? v.link_to(wording, v.url_for(action: show_action.action_name, model_name: am.to_param, id: associated.id), class: 'pjax') : wording
-                end.to(max_associated_to_show-1).to_sentence.html_safe
-                if (count_associated > max_associated_to_show)
-                  associated_links = associated_links+ " and #{count_associated - max_associated_to_show} more".html_safe
+                end.to(max_associated_to_show - 1).to_sentence.html_safe
+                if count_associated > max_associated_to_show
+                  associated_links = associated_links + " and #{count_associated - max_associated_to_show} more".html_safe
                 end
                 associated_links
               end
