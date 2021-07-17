@@ -6,7 +6,7 @@
     "hub", "integrations"
   ],
   "website": "https://cenit.io",
-  "logo": "https://github.com/cenit-io/cenit/raw/master/app/assets/images/logo_cenitsaas_web.png",
+  "logo": "https://github.com/cenit-io/cenit/raw/master/app/assets/images/miesh-logo-2.png",
   "repository": "https://github.com/cenit-io/cenit",
   "addons": [
     "cloudamqp:lemur",

@@ -60,16 +60,20 @@ section {
   text-decoration: none;
 }
 
-.user-auth .panel-heading .cenit-logo,
+.user-auth .panel-heading {
+  background: #385CAD !important;
+}
+
+.user-auth .panel-heading .miesh-logo,
 .user-auth .panel-heading .cenit-hub {
   display: inline-block;
   vertical-align: middle;
-  height: 32px;
+  height: 40px;
   font-size: 32px;
   line-height: 32px;
 }
 
-.user-auth .panel-heading .cenit-logo img {
+.user-auth .panel-heading .miesh-logo img {
   max-height: 100%;
   width: auto;
 }
@@ -191,7 +195,7 @@ section {
 }
 
 .user-auth .soc-cenit {
-  background-color: #3D4046;
+  background-color: #385CAD;
 }
 
 .oauth-authorize {

@@ -41,7 +41,7 @@ h3, .h3 {
 .navbar-brand img {
   max-height: 100%;
   width: auto;
-  padding-bottom: 4px;
+  padding: 6px 0 0 6px;
 }
 
 .navbar-btn {
@@ -57,7 +57,7 @@ ul#main-accordion {
 }
 
 .navbar-fixed-top .container-fluid {
-  background: #3D4046;
+  background: #385CAD;
 }
 
 #secondary-navigation .navbar-right {
@@ -210,7 +210,7 @@ ul.drawer {
   left: 100%;
   width: 250px;
   height: calc(100vh - 100%);
-  background-color: #3D4046;
+  background-color: #385CAD;
   transition: all .5s ease-in-out;
   padding: 6px;
   margin: 0;
@@ -251,7 +251,7 @@ ul.drawer li a span {
   position: absolute;
   width: calc(100% - 12px);
   bottom: 20px;
-  background-color: #3D4046;
+  background-color: #385CAD;
 }
 
 .social-links a {
@@ -267,7 +267,7 @@ ul.drawer li a span {
   padding-left: 40px;
   transition: all 0.5s ease;
   position: relative;
-  background: #3d4046;
+  background: #385CAD;
   padding-top: 50px;
   height: 100vh;
   overflow: hidden;
@@ -445,12 +445,12 @@ ul.drawer li a span {
 }
 
 .navbar-header {
-  .cenit-logo {
+  .miesh-logo {
     display: inline-block;
     position: relative;
     top: -4px;
     img {
-      height: 30px;
+      height: 40px;
     }
   }
 
@@ -644,7 +644,7 @@ ul#main-accordion .panel-heading .nav-icon {
 #sidebar-wrapper .social-links {
   position: absolute;
   bottom: 0;
-  background-color: #3d4046;
+  background-color: #385CAD;
   width: 100%;
   text-align: center;
   padding: 12px;
@@ -1922,7 +1922,7 @@ div#subdomain-panel {
   [class$='bulb'] {
     height: 100%;
   }
-  .cenit-logo {
+  .miesh-logo {
     @media(min-width: 768px) {
       padding-top: 10%;
     }
@@ -2816,7 +2816,7 @@ li.no-childrens {
 }
 
 .navbar-brand {
-  padding-right: 7px;
+  padding: 6px 0 0 6px;
 }
 
 .exchange i {
@@ -3110,7 +3110,7 @@ button#model-nav-xs {
   }
   .panel-default > .panel-heading {
 
-    background-color: #3d4046;
+    background-color: #385CAD;
 
   }
 }
